@@ -1,0 +1,6 @@
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE customers(id INTEGER PRIMARY KEY, name STRING);
+INSERT INTO customers VALUES(1,'Peterson');
+COMMIT;
+
