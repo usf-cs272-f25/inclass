@@ -7,6 +7,7 @@ import (
 )
 
 func startServer(idx Index) {
+	// Use http.Dir to serve the contents of ./static for GET requests
 	http.Handle("/", http.FileServer(http.Dir("./static")))
 	http.HandleFunc("/search", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query().Get("q")
