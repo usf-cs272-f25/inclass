@@ -9,7 +9,7 @@ import (
 )
 
 type Car struct {
-	gorm.Model
+	ID       int `gorm:"primaryKey"`
 	Make     string
 	CarModel string
 	Year     int
@@ -29,7 +29,8 @@ func main() {
 	}
 	defer sqldb.Close()
 
-	db.AutoMigrate(&Car{})
+	// Creates the schema for the types of args passed
+	db.AutoMigrate(&Car{}, &Word{}, &Doc{})
 
 	accord := Car{
 		Make:     "Honda",
@@ -40,6 +41,7 @@ func main() {
 	fmt.Println("created accord ID: ", accord.ID)
 
 	var foundCar Car
+	// SELECT * FROM cars WHERE id = ?
 	db.First(&foundCar, accord.ID)
 	fmt.Printf("found: %v\n", foundCar)
 
@@ -52,6 +54,7 @@ func main() {
 	fmt.Println("created camry ID: ", camry.ID)
 
 	var foundCars []Car
+	// SELECT * FROM cars where id = ?, ?
 	db.Find(&foundCars, []int{1, 2})
 	for _, car := range foundCars {
 		fmt.Printf("Found car: %v\n", car)
