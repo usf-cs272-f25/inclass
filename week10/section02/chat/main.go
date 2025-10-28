@@ -21,6 +21,10 @@ func main() {
 				Role:    openai.ChatMessageRoleUser,
 				Content: prompt,
 			},
+			{
+				Role: openai.ChatMessageRoleSystem,
+				Content: "csv contents",
+			},
 		},
 	}
 
