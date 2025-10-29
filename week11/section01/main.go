@@ -18,8 +18,10 @@ type DB struct {
 
 func NewDB() *DB {
 	// Load the vec0 vector extension
+	name := "demo.db"
+	os.Remove(name)
 	sqlite_vec.Auto()
-	db, err := sql.Open("sqlite3", "demo.db")
+	db, err := sql.Open("sqlite3", name)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -28,10 +30,13 @@ func NewDB() *DB {
 	_, err = db.Exec(`
 		CREATE VIRTUAL TABLE demo USING vec0(
 			id INTEGER PRIMARY KEY,
+			plain TEXT,
 			embedding FLOAT[3072]
 		);
 	`)
-	log.Fatal(err)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	return &DB{
 		db:     db,
@@ -39,7 +44,7 @@ func NewDB() *DB {
 	}
 }
 
-func (db *DB) CreateEmbedding(input string) []float32 {
+func (db *DB) CreateBlob(input string) []byte {
 	req := openai.EmbeddingRequest{
 		Input: "Who is teaching CS 315",
 		Model: openai.LargeEmbedding3,
@@ -48,35 +53,57 @@ func (db *DB) CreateEmbedding(input string) []float32 {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return resp.Data[0].Embedding
+	bts, err := sqlite_vec.SerializeFloat32(resp.Data[0].Embedding)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return bts
 }
 
-func (db *DB) InsertEmbedding(rowid int, e []float32) {
+func (db *DB) InsertBlob(rowid int, p string, b []byte) {
 	// Insert the embedding we got from OpenAI into the virtual table
 	_, err := db.db.Exec(`
-		INSERT INTO demo VALUES(?, ?);
-	`, rowid, e)
+		INSERT INTO demo VALUES(?, ?, ?);
+	`, rowid, p, b)
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
 func (db *DB) Query(p string) {
-	// e := db.CreateEmbedding(p)
-	// sql
-	// rows, err := db.db.Query()
+	b := db.CreateBlob(p)
+	rows, err := db.db.Query(`
+		SELECT id, plain, distance FROM demo WHERE embedding MATCH ? ORDER BY distance LIMIT 3;
+	`, b)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for rows.Next() {
+		var id int32
+		var distance float32
+		var plain string
+		err = rows.Scan(&id, &plain, &distance)
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Printf("id: %d, plain: %s, distance: %f\n", id, plain, distance)
+	}
 }
 
 func main() {
-	courses := []string{
-		"Phil Peterson teaches CS 272",
-		"Greg Benson teaches CS 315",
+	people := []string{
+		"Phil Peterson",
+		"Greg Benson",
+		"Ellen Veomett",
+		"EJ Jung",
+		"Mehmet Emre",
 	}
 	db := NewDB()
-	for idx, c := range courses {
-		e := db.CreateEmbedding(c)
-		db.InsertEmbedding(idx, e)
+	for idx, p := range people {
+		b := db.CreateBlob(p)
+		db.InsertBlob(idx, p, b)
 	}
 
-	// db.Query("who teaches CS 315?")
+	db.Query("Philip Peterson")
 }
