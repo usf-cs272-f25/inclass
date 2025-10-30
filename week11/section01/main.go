@@ -46,7 +46,7 @@ func NewDB() *DB {
 
 func (db *DB) CreateBlob(input string) []byte {
 	req := openai.EmbeddingRequest{
-		Input: "Who is teaching CS 315",
+		Input: input,
 		Model: openai.LargeEmbedding3,
 	}
 	resp, err := db.client.CreateEmbeddings(context.TODO(), req)
@@ -63,7 +63,7 @@ func (db *DB) CreateBlob(input string) []byte {
 func (db *DB) InsertBlob(rowid int, p string, b []byte) {
 	// Insert the embedding we got from OpenAI into the virtual table
 	_, err := db.db.Exec(`
-		INSERT INTO demo VALUES(?, ?, ?);
+		INSERT INTO demo (id, plain, embedding) VALUES(?, ?, ?);
 	`, rowid, p, b)
 	if err != nil {
 		log.Fatal(err)
