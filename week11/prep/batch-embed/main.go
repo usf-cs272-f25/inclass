@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
+	"time"
 
 	sqlite_vec "github.com/asg017/sqlite-vec-go-bindings/cgo"
 	_ "github.com/mattn/go-sqlite3"
@@ -40,6 +42,19 @@ func main() {
 		"Ellen Veomett",
 		"Kelsey Urgo",
 		"Phil Peterson",
+		"David Guy Brizan",
+		"EJ Jung",
+		"David Wolber",
+		"Matthew Malensek",
+		"Paul Haskell",
 	}
+
+	start := time.Now()
+	// for _, p := range people {
+	// 	CreateBlobs(client, []string{p})
+	// }
 	CreateBlobs(client, people)
+
+	fmt.Println(time.Since(start))
+
 }
